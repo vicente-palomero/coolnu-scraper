@@ -51,7 +51,8 @@ def openHRef(url, urls, result):
         if a['href'] not in result:
             result.append((a['title'], a['href']))
 
-    openHRef('https://es.wikipedia.org{}'.format(nextPage['href']), urls, result)
+    if nextPage is not None:
+        openHRef('https://es.wikipedia.org{}'.format(nextPage['href']), urls, result)
 
 
 def urlToBeautifulSoup(url):
