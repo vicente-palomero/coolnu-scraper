@@ -67,10 +67,9 @@ def openHRef(url, urls, result):
             result[a['title']] = {
                 'qid': qid,
                 'title': a['title'],
-                'href': a['href'],
+                'href': wikilink,
                 'data': data
             }
-            print(result[a['title']])
 
     if nextPage is not None:
         openHRef('https://es.wikipedia.org{}'.format(nextPage['href']), urls, result)
@@ -84,18 +83,32 @@ def getData(bs):
         aProperty = data.find('a', {'title': re.compile('Property:P[0-9]*')})
         propertyId = aProperty['title'].split(':')[1]
         propertyName = aProperty.get_text()
-        if propertyName == 'logo image':
-            aValue = data.findAll('img')
+        if 'image' in propertyName:
+            aValue = [data.find('img')]
         else:
-            aValue = data.findAll('a', {'title': re.compile('Q[0-9]*')})
+            aValue = data.findAll('div', {'class': 'wikibase-snakview-value wikibase-snakview-variation-valuesnak'})
         values = {}
         for a in aValue:
             if (a.name == 'img'):
                 qValue = 'img'
                 textValue = 'https:{}'.format(a['src'])
-            else:
-                qValue = a['title']
-                textValue= a.get_text()
+            else: # this is a div
+                if len(a.find_all()) > 0:
+                    innerDataTitle = a.find_all('a', {'title': re.compile('Q[0-9]*')})
+                    for idata in innerDataTitle:
+                        if 'ikipedia' in idata.get_text():
+                            continue
+                        qValue = idata['title']
+                        textValue = idata.get_text()
+                    innerDataLink = a.find_all('a', {'class': re.compile('external free')})
+                    for idata in innerDataLink:
+                        if 'ikipedia' in idata.get_text():
+                            continue
+                        qValue = 'link'
+                        textValue = idata.get_text()
+                else:
+                    qValue = 'value'
+                    textValue = a.get_text()
             values[qValue] = textValue
 
         properties[propertyId] = {}
@@ -103,7 +116,6 @@ def getData(bs):
         properties[propertyId]['values'] = values
 
     return properties
-
 
 def urlToBeautifulSoup(url):
     try:
