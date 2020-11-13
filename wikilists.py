@@ -7,6 +7,9 @@ import sys, getopt
 from bs4 import BeautifulSoup
 from bs4 import re
 
+
+wikipedia = 'https://es.wikipedia.org'
+
 def main(argv):
     url = ''
     outputfile = ''
@@ -27,14 +30,15 @@ def main(argv):
             assert False, "unhandled option"
 
     urls = []
-    result = []
+    result = {}
     openHRef(url, urls, result)
 
-    with open(outputfile, mode="w") as csv_file:
-        writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        writer.writerow(['title', 'href'])
-        for r in result:
-            writer.writerow([r[0], r[1]])
+    print(result)
+    # with open(outputfile, mode="w") as csv_file:
+    #     writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+    #     writer.writerow(['title', 'href'])
+    #     for r in result:
+    #         writer.writerow([r[0], r[1]])
 
 def openHRef(url, urls, result):
     if (url in urls):
@@ -48,11 +52,57 @@ def openHRef(url, urls, result):
     anchors = container.findAll('a', {'href': re.compile("/wiki/.*")})
 
     for a in anchors:
-        if a['href'] not in result:
-            result.append((a['title'], a['href']))
+        if a['title'] not in result:
+            wikilink = '{}{}'.format(wikipedia, a['href'])
+            bsWikilink = urlToBeautifulSoup(wikilink)
+            wikidataUrl = bsWikilink.find('a', {'href': re.compile('https://www.wikidata.org/wiki/Q')})
+            if (wikidataUrl is None):
+                continue
+            wikidataHref = wikidataUrl['href']
+            bsWikidata = urlToBeautifulSoup(wikidataHref)
+
+            data = getData(bsWikidata)
+
+            qid = 'Q{}'.format(wikidataHref.split('Q')[1])
+            result[a['title']] = {
+                'qid': qid,
+                'title': a['title'],
+                'href': a['href'],
+                'data': data
+            }
+            print(result[a['title']])
 
     if nextPage is not None:
         openHRef('https://es.wikipedia.org{}'.format(nextPage['href']), urls, result)
+
+def getData(bs):
+    statementHeader = bs.find(id = 'claims').parent
+    divContainer = statementHeader.find_next_sibling()
+    divData = divContainer.findAll('div', {'id': re.compile('P[0-9]*')})
+    properties = {}
+    for data in divData:
+        aProperty = data.find('a', {'title': re.compile('Property:P[0-9]*')})
+        propertyId = aProperty['title'].split(':')[1]
+        propertyName = aProperty.get_text()
+        if propertyName == 'logo image':
+            aValue = data.findAll('img')
+        else:
+            aValue = data.findAll('a', {'title': re.compile('Q[0-9]*')})
+        values = {}
+        for a in aValue:
+            if (a.name == 'img'):
+                qValue = 'img'
+                textValue = 'https:{}'.format(a['src'])
+            else:
+                qValue = a['title']
+                textValue= a.get_text()
+            values[qValue] = textValue
+
+        properties[propertyId] = {}
+        properties[propertyId]['label'] = propertyName
+        properties[propertyId]['values'] = values
+
+    return properties
 
 
 def urlToBeautifulSoup(url):
