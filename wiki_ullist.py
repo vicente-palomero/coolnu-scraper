@@ -37,23 +37,23 @@ def main(argv):
         else:
             assert False, "unhandled option"
 
-    result = {}
-    read_tables(url, result)
+    read_list(url)
 
-def read_tables(url, result):
+def read_list(url):
     bsObj = urlToBSoup(url)
-    tables = bsObj.find_all('table', {'class': 'wikitable'})
-    pos = 0
-    for t in tables:
-        pos = pos + 1
-        table = read_table(t, str(pos))
-        for r in table['body']:
-            print(','.join(r))
+    ul_list = bsObj.find('table')
+    for li in ul_list.find_all('li'):
+        text = li.get_text().replace("(escritor", "")
+        if "No se tienen datos" in text or "No celebrado" in text or "Desierto" in text:
+            continue
+        (year, text) = text.split(' ', 1)
+        (author, title) = text.split("por", 1)
+        print(','.join([year, 'Ateneo Sevilla', "1", author.strip(), title.strip()]))
 
 def read_table(table, position):
-    prize = "Azorin"
+    prize = "Nadal"
     yearTablePosition = 0
-    winnerTablePosition = 3
+    winnerTablePosition = 1
     titleTablePosition = 2
     whereInfoShouldBePosition = 1
 
