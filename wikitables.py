@@ -51,10 +51,10 @@ def read_tables(url, result):
             print(','.join(r))
 
 def read_table(table, position):
-    prize = "Alfaguara"
+    prize = "Nadal"
     yearTablePosition = 0
-    winnerTablePosition = 2
-    titleTablePosition = 1
+    winnerTablePosition = 1
+    titleTablePosition = 2
     whereInfoShouldBePosition = 1
 
     head_body = {'head': [], 'body': []}
@@ -72,11 +72,17 @@ def read_table(table, position):
             oneYear = row[yearTablePosition].get_text().strip('\n')
             year = [oneYear]
             # year = [oneYear, oneYear, oneYear] # Para ejemplos en los que hay celdas con hasta 3 filas
-            winners = [a.get_text().strip('\n') for a in row[winnerTablePosition].find_all('a')]
+            winners1 = [a.get_text().strip('\n') for a in row[winnerTablePosition].find_all('a')]
             flags = ["-", "-", "-"] #[span for span in row[2].find('span')] # No sé sacar bien el nombre del país
-            titles = [i.text for i in row[titleTablePosition].findAll('i')]
-            bodyRow = [list(a) for a in zip(year, [prize, prize, prize], pos, winners, titles)]
-            head_body['body'] += bodyRow
+            titles1 = [i.text for i in row[titleTablePosition].findAll('i')]
+            bodyRow1 = [list(a) for a in zip(year, [prize], "1", winners1, titles1)]
+            head_body['body'] += bodyRow1
+            # Adaptado para la tabla del Nadal, marcado como FALSE para que no moleste
+            if False and len(row) > 4:
+                winners2 = [a.get_text().strip('\n') for a in row[winnerTablePosition + 2].find_all('a')]
+                titles2 = [i.text for i in row[titleTablePosition + 2].findAll('i')]
+                bodyRow2 = [list(a) for a in zip(year, [prize], "2", winners2, titles2)]
+                head_body['body'] += bodyRow2
     return head_body
 
 def urlToBSoup(url):
