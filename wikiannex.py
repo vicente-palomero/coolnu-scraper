@@ -34,7 +34,10 @@ def main(argv):
     for id in ids:
         element = {}
         name = id.get_text()
-        element['name'] = name
+        element['qid'] = ''
+        element['title'] = name
+        element['href'] = ''
+        element['data'] = {}
         if (name == 'Referencias'):
             break
         parent = id.parent
@@ -42,7 +45,7 @@ def main(argv):
         if (article is not None and article.name == 'div'):
             articleHref = article.find('i').find('a')['href']
             wikilink = '{}{}'.format(wikipedia, articleHref)
-            element['href'] = wikilink
+            element['href'] = articleHref
             nextNode = parent.find_next_sibling()
         while True:
             if (nextNode.name == 'ul'):
@@ -52,32 +55,31 @@ def main(argv):
             nextNode = nextNode.find_next_sibling()
             continue
 
-        if (nextNode.name == 'h2'):
-            nextNode = parent.find_next_sibling()
-            element['media'] = {}
-            counter = 0
-            while True:
-                if (nextNode.name == 'p'):
-                    element['media']["p{}".format(counter)] = nextNode.get_text()
-                    counter = counter+1
-                elif (nextNode.name == 'h2'):
-                    break
-                nextNode = nextNode.find_next_sibling()
-                continue
+        # if (nextNode.name == 'h2'):
+        #     nextNode = parent.find_next_sibling()
+        #     element['media'] = {}
+        #     counter = 0
+        #     while True:
+        #         if (nextNode.name == 'p'):
+        #             element['media']["p{}".format(counter)] = nextNode.get_text()
+        #             counter = counter+1
+        #         elif (nextNode.name == 'h2'):
+        #             break
+        #         nextNode = nextNode.find_next_sibling()
+        #         continue
 
-        else:
-            li = nextNode.findAll('li')
-            actives = {}
-            for l in li:
-                text = (l.get_text())
-                if ':' in text:
-                    category, other = text.split(':', 1)
-                    actives[category.strip()] = other
-            element['media'] = actives
+        # else:
+        #     li = nextNode.findAll('li')
+        #     actives = {}
+        #     for l in li:
+        #         text = (l.get_text())
+        #         if ':' in text:
+        #             category, other = text.split(':', 1)
+        #             actives[category.strip()] = other
+        #     element['media'] = actives
 
         href = element.get('href', False)
         if href:
-
             bsWikilink = urlToBeautifulSoup(wikilink)
             wikidataUrl = bsWikilink.find('a', {'href': re.compile('https://www.wikidata.org/wiki/Q')})
             if (wikidataUrl is None):
@@ -90,7 +92,7 @@ def main(argv):
             qid = 'Q{}'.format(wikidataHref.split('Q')[1])
             element['qid'] = qid
             element['data'] = data
-        elements[element['name']] = element
+        elements[element['title']] = element
     print(elements)
 
 def getData(bs):

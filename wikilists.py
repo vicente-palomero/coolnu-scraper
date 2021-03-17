@@ -14,7 +14,7 @@ def main(argv):
     url = ''
     outputfile = ''
     try:
-        opts, args = getopt.getopt(argv, "hu:o:", ["url=","ofile="])
+        opts, args = getopt.getopt(argv, "hu:", ["url="])
     except getopt.GetoptError:
         print('scrap.py -u <url> -o <outputfile>')
         sys.exit(2)
@@ -24,8 +24,6 @@ def main(argv):
             sys.exit()
         elif opt in ("-u", "--url"):
             url = arg
-        elif opt in ("-o", "--ofile"):
-            outputfile = arg
         else:
             assert False, "unhandled option"
 
@@ -34,11 +32,6 @@ def main(argv):
     openHRef(url, urls, result)
 
     print(result)
-    # with open(outputfile, mode="w") as csv_file:
-    #     writer = csv.writer(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    #     writer.writerow(['title', 'href'])
-    #     for r in result:
-    #         writer.writerow([r[0], r[1]])
 
 def openHRef(url, urls, result):
     if (url in urls):
@@ -52,7 +45,7 @@ def openHRef(url, urls, result):
     anchors = container.findAll('a', {'href': re.compile("/wiki/.*")})
 
     for a in anchors:
-        if a['title'] not in result:
+        if a.has_attr('title') and a['title'] not in result:
             wikilink = '{}{}'.format(wikipedia, a['href'])
             bsWikilink = urlToBeautifulSoup(wikilink)
             wikidataUrl = bsWikilink.find('a', {'href': re.compile('https://www.wikidata.org/wiki/Q')})
