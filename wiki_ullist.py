@@ -5,20 +5,18 @@ import numpy as np
 from urllib.request import urlopen
 
 # Como usar esto:
-#  1. En el método read_table hay 5 variables. Estas variables deben ser adaptadas a:
+#  1. En el método read_list hay 2 variables. Estas variables deben ser adaptadas a:
 #     a. Nombre del premio
-#     b. Posición del año en la tabla
-#     c. Posición del ganador / persona en la tabla
-#     d. Posición del título en la tabla
+#     2. Posición del ganador / persona en la lista
 #
-# En "pos" está la posición (ganador/subganador) en caso de que haya varias tablas. Este valor viene del orden
-# de la tabla, si es la primera o segunda.
+# EJECUCIÓN
+# Para que se vea por pantalla:
+# python wiki_ullist.py -u URL
 #
-# En caso de que haya tablas con filas dentro de una celda (véase 3 finalistas de un premio) hay que multiplicar
-# las posiciones, los años y si hubiera bandera u otro campo por el número de finalistas. Ver abajo, lo que está
-# comentado
+# Para guardarlo en un archivo de texto (terminal Linux)
+# python wiki_ullist.py -u URL > /RUTA/DEL/ARCHIVO
 #
-# La salida es por consola
+# Si se guarda como .csv se puede importar desde Google Spreadsheet sin problemas
 
 def main(argv):
     url = ''
@@ -40,50 +38,17 @@ def main(argv):
     read_list(url)
 
 def read_list(url):
+    prize = 'Ateneo Sevilla'
+    winner = '1'
     bsObj = urlToBSoup(url)
     ul_list = bsObj.find('table')
     for li in ul_list.find_all('li'):
         text = li.get_text().replace("(escritor", "")
         if "No se tienen datos" in text or "No celebrado" in text or "Desierto" in text:
             continue
-        (year, text) = text.split(' ', 1)
-        (author, title) = text.split("por", 1)
-        print(','.join([year, 'Ateneo Sevilla', "1", author.strip(), title.strip()]))
-
-def read_table(table, position):
-    prize = "Nadal"
-    yearTablePosition = 0
-    winnerTablePosition = 1
-    titleTablePosition = 2
-    whereInfoShouldBePosition = 1
-
-    head_body = {'head': [], 'body': []}
-    for tr in table.select('tr'):
-        if all(t.name == 'th' for t in tr.find_all(recursive=False)):
-            head_body['head'] += [th.get_text().rstrip('\n') for th in tr.find_all(recursive=False)]
-        else:
-            row = [td for td in tr.find_all(recursive=False)]
-            info = row[whereInfoShouldBePosition].get_text()
-            shallContinue = 'No convocado' in info or 'Desierto' in info # Aquí cuando no se entregó el premio, por lo que sea. Salta
-            if shallContinue:
-                continue
-            pos = [position]
-            # pos = [position, position, position] # Para ejemplos en los que hay celdas con hasta 3 filas
-            oneYear = row[yearTablePosition].get_text().strip('\n')
-            year = [oneYear]
-            # year = [oneYear, oneYear, oneYear] # Para ejemplos en los que hay celdas con hasta 3 filas
-            winners1 = [a.get_text().strip('\n') for a in row[winnerTablePosition].find_all('a')]
-            flags = ["-", "-", "-"] #[span for span in row[2].find('span')] # No sé sacar bien el nombre del país
-            titles1 = [i.text for i in row[titleTablePosition].findAll('i')]
-            bodyRow1 = [list(a) for a in zip(year, [prize], "1", winners1, titles1)]
-            head_body['body'] += bodyRow1
-            # Adaptado para la tabla del Nadal, marcado como FALSE para que no moleste
-            if False and len(row) > 4:
-                winners2 = [a.get_text().strip('\n') for a in row[winnerTablePosition + 2].find_all('a')]
-                titles2 = [i.text for i in row[titleTablePosition + 2].findAll('i')]
-                bodyRow2 = [list(a) for a in zip(year, [prize], "2", winners2, titles2)]
-                head_body['body'] += bodyRow2
-    return head_body
+        (year, text) = text.split(' ', 1) # Esta línea separa el año del resto.
+        (author, title) = text.split("por", 1) # Esta línea separa al autor del título (en el caso usado no hace falta más)
+        print(','.join([year, prize, winner, author.strip(), title.strip()]))
 
 def urlToBSoup(url):
     return BeautifulSoup(urlopen(url).read(), features = "html.parser")
