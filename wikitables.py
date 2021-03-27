@@ -5,7 +5,7 @@ import numpy as np
 from urllib.request import urlopen
 
 # Como usar esto:
-#  1. En el método read_table hay 5 variables. Estas variables deben ser adaptadas a:
+#  1. En el método read_table hay 4 variables. Estas variables deben ser adaptadas a:
 #     a. Nombre del premio
 #     b. Posición del año en la tabla
 #     c. Posición del ganador / persona en la tabla
@@ -18,7 +18,14 @@ from urllib.request import urlopen
 # las posiciones, los años y si hubiera bandera u otro campo por el número de finalistas. Ver abajo, lo que está
 # comentado
 #
-# La salida es por consola
+# EJECUCIÓN
+# Para que se vea por pantalla:
+# python wikitables.py -u URL
+#
+# Para guardarlo en un archivo de texto (terminal Linux)
+# python wikitables.py -u URL > /RUTA/DEL/ARCHIVO.csv
+#
+# Si se guarda como .csv se puede importar desde Google Spreadsheet sin problemas
 
 def main(argv):
     url = ''
@@ -37,10 +44,9 @@ def main(argv):
         else:
             assert False, "unhandled option"
 
-    result = {}
-    read_tables(url, result)
+    read_tables(url)
 
-def read_tables(url, result):
+def read_tables(url):
     bsObj = urlToBSoup(url)
     tables = bsObj.find_all('table', {'class': 'wikitable'})
     pos = 0
@@ -53,9 +59,9 @@ def read_tables(url, result):
 def read_table(table, position):
     prize = "Breve"
     yearTablePosition = 0
-    winnerTablePosition = 2
-    titleTablePosition = 1
-    whereInfoShouldBePosition = 1
+    winnerTablePosition = 3
+    titleTablePosition = 2
+    whereInfoShouldBePosition = 1 # Esto es por si hay una fila desierta
 
     head_body = {'head': [], 'body': []}
     for tr in table.select('tr'):
@@ -64,7 +70,7 @@ def read_table(table, position):
         else:
             row = [td for td in tr.find_all(recursive=False)]
             info = row[whereInfoShouldBePosition].get_text()
-            shallContinue = 'No convocado' in info or 'Desierto' in info # Aquí cuando no se entregó el premio, por lo que sea. Salta
+            shallContinue = 'No convocado' in info or 'Desierto' in info # Aquí cuando no se entregó el premio, por lo que sea. Cambiar para adaptar a textos "inválidos" de la tabla
             if shallContinue:
                 continue
             pos = [position]
