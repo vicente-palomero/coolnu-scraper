@@ -51,10 +51,10 @@ def read_tables(url, result):
             print(','.join(r))
 
 def read_table(table, position):
-    prize = "Azorin"
+    prize = "Breve"
     yearTablePosition = 0
-    winnerTablePosition = 3
-    titleTablePosition = 2
+    winnerTablePosition = 2
+    titleTablePosition = 1
     whereInfoShouldBePosition = 1
 
     head_body = {'head': [], 'body': []}
