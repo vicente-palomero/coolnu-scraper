@@ -5,30 +5,37 @@ import numpy as np
 from urllib.request import urlopen
 
 # Como usar esto:
-#  1. En el método read_table hay 4 variables. Estas variables deben ser adaptadas a:
-#     a. Nombre del premio
-#     b. Posición del año en la tabla
-#     c. Posición del ganador / persona en la tabla
-#     d. Posición del título en la tabla
-#
-# En "pos" está la posición (ganador/subganador) en caso de que haya varias tablas. Este valor viene del orden
-# de la tabla, si es la primera o segunda.
-#
 # En caso de que haya tablas con filas dentro de una celda (véase 3 finalistas de un premio) hay que multiplicar
 # las posiciones, los años y si hubiera bandera u otro campo por el número de finalistas. Ver abajo, lo que está
 # comentado
 #
-# EJECUCIÓN
+# EJECUCIÓN DESDE CONSOLA
 # Para que se vea por pantalla:
 # python wikitables.py -u URL
 #
 # Para guardarlo en un archivo de texto (terminal Linux)
 # python wikitables.py -u URL > /RUTA/DEL/ARCHIVO.csv
 #
+# EJECUCION DESDE ANACONDA O SIMILARES
+# 1. Definir las variables "url", "prize", "year", "winner", "title", "info":
+#   1. url: ruta completa de la wikipedia
+#   2. prize: posición en la tabla de la columna de premios
+
+#   3. year: posición en la tabla de la columna de año
+#   4. winner: posición en la tabla de la columna de ganadores
+#   5. title: posición en la tabla de la columna de nombres de las obras
+#   6. info: para filas con info como "no presentado"
+#
 # Si se guarda como .csv se puede importar desde Google Spreadsheet sin problemas
 
+url = "https://es.wikipedia.org/wiki/Premio_Biblioteca_Breve"
+prize = "Breve"
+year = 0 
+winner = 2
+title = 1 
+info =  1
 def run_by_url(url, prize, year, winner, title, info):
-    read_tables(url)
+    read_tables(url, prize, year, winner, title, info)
 
 def main(argv, prize, year, winner, title, info):
     url = ''
@@ -97,7 +104,7 @@ if __name__ == "__main__":
     prize = "Breve" # Nombre en clave del premio
     year = 0 # Columna donde esta el anyo, empezando por 0
     winner = 2 # Columna donde esta el ganador, empezando por 0
-    title = 1 # Columnad donde esta el titulo, empezando por 0
+    title = 1 # Columna donde esta el titulo, empezando por 0
     info = 1 # Esto es por si hay una fila desierta
     #run_by_url("https://es.wikipedia.org/wiki/Premio_Biblioteca_Breve", prize, year, winner, title, info)
     main(sys.argv[1:], prize, year, winner, title, info)
