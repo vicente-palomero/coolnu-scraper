@@ -1,4 +1,4 @@
-#!/usr/bin/python
+    #!/usr/bin/python
 import sys, getopt
 from bs4 import BeautifulSoup
 import numpy as np
@@ -18,7 +18,10 @@ from urllib.request import urlopen
 #
 # Si se guarda como .csv se puede importar desde Google Spreadsheet sin problemas
 
-def main(argv):
+def run_by_url(url, prize, winner):
+    read_list(url, prize, winner)
+
+def main(argv, prize, winner):
     url = ''
     outputfile = ''
     try:
@@ -35,11 +38,9 @@ def main(argv):
         else:
             assert False, "unhandled option"
 
-    read_list(url)
+    read_list(url, prize, winner)
 
-def read_list(url):
-    prize = 'Ateneo Sevilla'
-    winner = '1'
+def read_list(url, prize, winner):
     bsObj = urlToBSoup(url)
     ul_list = bsObj.find('table')
     for li in ul_list.find_all('li'):
@@ -55,4 +56,7 @@ def urlToBSoup(url):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    prize = 'Ateneo Sevilla'
+    winner = '1'
+    #run_by_url("https://MY_WIKI_URL", prize, winner)
+    main(sys.argv[1:], prize, winner)
