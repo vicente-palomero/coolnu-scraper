@@ -1,12 +1,14 @@
 import pyderman as driver 
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 import time
 
 url = 'https://www.boxofficemojo.com/year/?area=ES'
-FILE_DIR='/home/vicente/tmp/chromedriver/'
+LIMIT_MOVIES_YEAR = 2
+STARTING_YEAR = 2010
+ENDING_YEAR = 2013
+FILE_DIR = '/home/vicente/tmp/chromedriver/'
 
 def install_browser(file_dir):
 
@@ -17,7 +19,6 @@ def install_browser(file_dir):
       verbose=True,
       version=None,
       filename='chromedriver')
-    print('Installed chromedriver to path: %s' % path)
 
 def setup_chrome(file_dir):
 
@@ -33,27 +34,57 @@ def setup_chrome(file_dir):
 
 def loop_table(driver):
 
+    summary = []
     anchors_len = len(driver.find_elements(By.XPATH, "//a[contains(@href, 'year')]"))
     for i in range(anchors_len):
-          anchor = driver.find_elements(By.XPATH, "//a[contains(@href, 'year')]")[i]
-          if (anchor.text.isdigit()):
-              anchor.click()
-              time.sleep(2)
-              visit_movies(driver)
-              driver.back()
+        anchor = driver.find_elements(By.XPATH, "//a[contains(@href, 'year')]")[i]
+        if (anchor.text.isdigit()):
+            year = anchor.text
+            if (int(year) >= STARTING_YEAR and int(year) <= ENDING_YEAR):
+                anchor.click()
+                time.sleep(2)
+                summary = summary + visit_movies(driver,year)
+                driver.back()
+    f = open('{}_to_{}_top{}.csv'.format(STARTING_YEAR, ENDING_YEAR, LIMIT_MOVIES_YEAR), 'w')
 
-def visit_movies(driver):
+    f.write('year, movie title, url, spain gross, domestic gross, worldwide gross, budget, imdb\n')
+    for row in summary:
+        f.write('"' + '", "'.join(row) + '"\n')
+    f.close()
 
-    anchors_len = len(driver.find_elements(By.XPATH, "//a[contains(@href, 'release') and contains(@class, 'a-link-normal') and not(contains(@href, 'imdb'))]"))
+def visit_movies(driver, year):
+
+    xpath_matcher = "//a[contains(@href, 'release') and contains(@class, 'a-link-normal') and not(contains(@href, 'imdb'))]"
+    anchors_len = len(driver.find_elements(By.XPATH, xpath_matcher))
+    movie_summaries = []
     for i in range(anchors_len):
-        anchor = driver.find_elements(By.XPATH, "//a[contains(@href, 'release') and contains(@class, 'a-link-normal') and not(contains(@href, 'imdb'))]")[i]
+        anchor = driver.find_elements(By.XPATH, xpath_matcher)[i]
         if (anchor.text in ['Release Date', '']):
             continue
         anchor.click()
-        time.sleep(3)
+        time.sleep(1)
+        movie_name = driver.find_element_by_class_name('a-size-extra-large').text
+        money_table = driver.find_element_by_class_name('mojo-performance-summary-table')
+        url = driver.current_url
+        moneys = money_table.find_elements_by_class_name('a-text-bold')
+        grosses = []
+        budget = 'N/A'
+        for money in moneys:
+            grosses.append(money.text)
+        try:
+            budget = driver.find_element(By.XPATH, "//*[text()='Budget']/following-sibling::span").text
+        except:
+            print('No budget')
+
+        imdb = driver.find_element(By.XPATH, "//*[text()='See more details at IMDbPro']").get_attribute('href')
+
+        movie_summary = [year, movie_name, url, grosses[1], grosses[2], grosses[3], budget, imdb.replace('pro.imdb', 'imdb').split('?')[0]]
+
+        movie_summaries.append(movie_summary)
         driver.back()
-        if (i > 2):
+        if (i > LIMIT_MOVIES_YEAR):
             break
+    return movie_summaries
 
 if __name__ == '__main__':
     install_browser(FILE_DIR)
@@ -61,18 +92,3 @@ if __name__ == '__main__':
  
     driver.get(url)
     loop_table(driver)
-
-#     page_source = driver.page_source
-
-#     soup = BeautifulSoup(page_source, features='html.parser')
-# 
-#     table_container = soup.find('div', {'id': 'table'})
-# 
-#     my_tables = table_container.find('table', {'class': 'scrolling-data-table'})
-#     for my_table in my_tables:
-#       for row in my_table.find_all('tr'):
-#         current_year = row.find('td')
-#         
-# 
-#         print(row.get_text())
-
